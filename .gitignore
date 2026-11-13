@@ -22,4 +22,4 @@ backend/data/
 node_modules/
 .env
 .env.*
-backend/firebase-credentials.js
+backend/firebase-credentials.json
