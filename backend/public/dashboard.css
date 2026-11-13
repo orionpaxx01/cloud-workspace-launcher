@@ -1,0 +1,65 @@
+/* Dashboard styling for the Cloud Workspace Launcher backend. */
+:root {
+  --bg: #1b1f24;
+  --surface: #232830;
+  --border: #2f3540;
+  --text: #e6e9ef;
+  --muted: #9aa3b2;
+  --accent: #4f9cf9;
+  --danger: #e55b6b;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.card-header {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.table-dark th {
+  background: #2c313c;
+  color: var(--text);
+}
+
+.table-hover tbody tr:hover {
+  background: #2a2f3a;
+}
+
+code {
+  background: #1a1e24;
+  color: #cfe3ff;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* Toast pinned to bottom-right, above everything. */
+#toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 360px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+#toast.d-none {
+  display: none !important;
+}
+
+/* Status dot colours. */
+.status-ok { background-color: #2ec27e; }
+.status-err { background-color: var(--danger); }
+.status-warn { background-color: #d9a441; }
+
+/* Truncate long ids / names without breaking layout. */
+.text-truncate { max-width: 260px; }

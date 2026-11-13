@@ -15,3 +15,11 @@ Thumbs.db
 *.pem
 firebaseConfig.json
 CLAUDE.md
+# Backend runtime data
+backend/data/
+
+
+node_modules/
+.env
+.env.*
+backend/firebase-credentials.js

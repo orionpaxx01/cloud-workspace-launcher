@@ -50,6 +50,7 @@ async function load() {
     $("#fb-messagingToken").value = s.firebaseConfig.messagingToken || "";
   }
   $("#custom-endpoint").value = s.customEndpoint || "";
+  $("#custom-api-key").value = s.customApiKey || "";
   $("#capture-pinned").checked = s.capturePinned;
   $("#capture-groups").checked = s.captureGroups;
   $("#sync-on-save").checked = s.syncOnSave;
@@ -102,6 +103,7 @@ $("#save-btn").addEventListener("click", async () => {
     backend,
     firebaseConfig,
     customEndpoint: $("#custom-endpoint").value.trim(),
+    customApiKey: $("#custom-api-key").value.trim(),
     capturePinned: $("#capture-pinned").checked,
     captureGroups: $("#capture-groups").checked,
     syncOnSave: $("#sync-on-save").checked,

@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
   backend: "local", // local | firebase | custom
   firebaseConfig: null, // { apiKey, appId, projectId, ... }
   customEndpoint: "", // e.g. https://api.example.com
+  customApiKey: "", // optional Bearer token for a custom server that requires auth
   autoSync: true,
   syncOnSave: true,
   capturePinned: true,

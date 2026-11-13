@@ -30,14 +30,62 @@ in one click. Backed by three interchangeable storage backends.
 
 ## Firebase setup
 
+The extension talks to Firestore through two different paths — pick the one
+that fits your deployment.
+
+### Option A — Extension-native (no backend)
+
+The extension talks to Firestore directly via its REST API using your project's
+`apiKey`. No server, no sign-in, no per-user isolation — every signed-in user
+shares the same collection.
+
 1. Create a project at [Firebase Console](https://console.firebase.google.com/).
 2. Register a web app → copy `apiKey`, `authDomain`, `projectId`, `storageBucket`, `appId`.
 3. In the extension Settings, select **Firebase** and paste the values.
-4. No separate sign-in step — the extension talks to Firestore directly via its
-   REST API using your project's `apiKey`. Make sure your Firestore security rules
-   allow reads/writes for the API key (or scope them by user if you add auth later).
+4. Make sure your Firestore security rules allow reads/writes for the API key
+   (or scope them by user if you add auth later).
 
 > Only client-side config is needed. Never commit a real `firebaseConfig.json`.
+
+### Option B — Custom backend with Firebase (recommended)
+
+Run the bundled backend (`backend/`) in **Firebase mode**. It uses the Admin
+SDK with a service account, so writes are gated on a verified Firebase ID
+token and every workspace is scoped to the caller's `uid` — one user can never
+read or mutate another user's workspaces.
+
+1. Create a project at [Firebase Console](https://console.firebase.google.com/).
+2. Generate a **service account key** (IAM & Admin → Service Accounts → Create
+   key, JSON). This is the only secret the backend needs.
+3. Deploy the Firestore rules in `backend/firestore.rules`:
+
+   ```bash
+   firebase deploy --only firestore
+   ```
+
+   The rules scope every document to `request.auth.uid == resource.data.owner`.
+
+4. Put the service-account JSON somewhere the backend can read it, in priority
+   order (see `backend/firebase-credentials.js`):
+
+   - `backend/firebase-credentials.json` (gitignored — safe to keep locally)
+   - `FIREBASES_CREDENTIALS` env var, base64-encoded JSON
+   - `GOOGLE_APPLICATION_CREDENTIALS` env var pointing at the file on disk
+
+5. Start the backend in Firebase mode:
+
+   ```bash
+   cd backend
+   STORAGE_BACKEND=firebase npm start
+   # -> Backend listening on http://localhost:3000
+   ```
+
+6. In the extension Settings, select **Custom** and point it at
+   `http://localhost:3000`. The extension signs in with Firebase Auth and sends
+   the returned ID token in the `Authorization: Bearer <token>` header on every
+   request.
+
+> Never commit a real `firebaseConfig.json` or service-account key.
 
 ## AI Features (Anthropic)
 
@@ -62,6 +110,39 @@ section.
 
 ## Custom backend
 
+The bundled backend (`backend/`) is a plain Node.js REST API with **no external
+dependencies** — it uses only Node's built-in `http` module and persists workspaces
+to a local JSON file.
+
+### Run it
+
+```bash
+cd backend
+npm start
+# -> Backend listening on http://localhost:3000
+```
+
+Override the port or data directory with environment variables:
+
+```bash
+PORT=3001 npm start            # custom port
+DATA_DIR=/var/lib/ws npm start # custom data directory
+STORE_FILE=/tmp/ws.json npm start
+```
+
+### Dashboard
+
+`http://localhost:3000` serves a Bootstrap dashboard that shows every saved
+workspace (name, ID, tab count, timestamps, delete), a live status indicator,
+and per-workspace stats. It talks to the same REST API the extension uses, so
+what you save in the popup appears here instantly.
+
+The dashboard is served statically from `backend/public/` — edit
+`public/index.html`, `public/dashboard.css`, `public/dashboard.js` to customise
+it. No build step.
+
+### API contract
+
 Point the extension at any server implementing:
 
 ```
@@ -74,6 +155,13 @@ DELETE /workspaces/:id        -> 200 | error
 ## File layout
 
 ```
+backend/
+  server.js          — HTTP server wrapping store.js (REST API + dashboard)
+  store.js           — JSON-file persistence (atomic writes)
+  public/
+    index.html       — Bootstrap dashboard UI
+    dashboard.css    — dashboard styling
+    dashboard.js     — dashboard client (plain fetch, no deps)
 src/
   utils.js          — pure helpers (generateId, isRestorableUrl, debounce, …)
   settings.js       — user settings persistence (chrome.storage.sync)

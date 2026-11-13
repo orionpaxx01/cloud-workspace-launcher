@@ -123,38 +123,54 @@ const firebase = {
 /** ---- Custom backend (your own HTTP API) ---- */
 const custom = {
   async cfg() {
-    const { customEndpoint } = await getSettings();
+    const { customEndpoint, customApiKey } = await getSettings();
     if (!customEndpoint) throw new Error("Custom server endpoint not set in Settings.");
-    return customEndpoint.replace(/\/+$/, "");
+    return {
+      ep: customEndpoint.replace(/\/+$/, ""),
+      // Optional Bearer token for a custom server that requires auth
+      // (e.g. the bundled backend running in STORAGE_BACKEND=firebase mode).
+      auth: customApiKey ? `Bearer ${customApiKey}` : null,
+    };
   },
   async list() {
-    const ep = await custom.cfg();
-    const res = await fetch(`${ep}/workspaces`);
+    const { ep, auth } = await custom.cfg();
+    const res = await fetch(`${ep}/workspaces`, auth ? { headers: { Authorization: auth } } : {});
     if (!res.ok) throw new Error(`Custom backend error ${res.status}`);
-    return res.json();
+    const data = await res.json();
+    // The backend returns a paged envelope { workspaces, total, offset, limit }.
+    // The storage layer contract is a bare array, so unwrap it here.
+    return Array.isArray(data) ? data : (data.workspaces || []);
   },
   async get(id) {
-    const ep = await custom.cfg();
-    const res = await fetch(`${ep}/workspaces/${encodeURIComponent(id)}`);
+    const { ep, auth } = await custom.cfg();
+    const res = await fetch(
+      `${ep}/workspaces/${encodeURIComponent(id)}`,
+      auth ? { headers: { Authorization: auth } } : {}
+    );
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Custom backend error ${res.status}`);
     return res.json();
   },
   async save(workspace) {
-    const ep = await custom.cfg();
+    const { ep, auth } = await custom.cfg();
+    const headers = { "Content-Type": "application/json" };
+    if (auth) headers.Authorization = auth;
     const res = await fetch(`${ep}/workspaces`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(workspace),
     });
     if (!res.ok) throw new Error(`Custom backend error ${res.status}`);
     return res.json();
   },
   async remove(id) {
-    const ep = await custom.cfg();
-    const res = await fetch(`${ep}/workspaces/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
+    const { ep, auth } = await custom.cfg();
+    const res = await fetch(
+      `${ep}/workspaces/${encodeURIComponent(id)}`,
+      auth
+        ? { method: "DELETE", headers: { Authorization: auth } }
+        : { method: "DELETE" }
+    );
     if (!res.ok) throw new Error(`Custom backend error ${res.status}`);
   },
 };

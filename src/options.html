@@ -87,6 +87,15 @@ DELETE /workspaces/:id</code></pre>
         <label>Endpoint</label>
         <input id="custom-endpoint" type="url" placeholder="https://api.example.com" />
       </div>
+      <div class="field">
+        <label>API key / Bearer token <span class="hint">(optional)</span></label>
+        <input id="custom-api-key" type="password" placeholder="any shared secret" autocomplete="off" />
+        <p class="hint">
+          Sent as <code>Authorization: Bearer &lt;token&gt;</code> on every request.
+          Needed when the server requires auth, e.g. the bundled backend in
+          <code>STORAGE_BACKEND=firebase</code> mode.
+        </p>
+      </div>
     </section>
 
     <section class="block">
